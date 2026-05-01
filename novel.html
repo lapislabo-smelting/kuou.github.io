@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>エントロピーの庭 — NOVEL ARCHIVE</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;700&family=Share+Tech+Mono&family=Cormorant+Garamond:ital,wght@0,300;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080c10;
+    --bg2: #0d1117;
+    --bg3: #111820;
+    --accent: #7eb8d4;
+    --accent2: #a8d8b0;
+    --accent3: #d4a8c0;
+    --text: #c8d8e8;
+    --text-dim: #5a7080;
+    --text-mute: #2a3840;
+    --border: #1a2830;
+    --glow: rgba(126,184,212,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Serif JP', serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .grid-overlay {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(126,184,212,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(126,184,212,0.025) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  @keyframes scanline {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100vh); }
+  }
+  .scanline {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(transparent, rgba(126,184,212,0.03), transparent);
+    animation: scanline 10s linear infinite;
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  /* ナビゲーション */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 50;
+    padding: 20px 80px;
+    background: rgba(8,12,16,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .nav-back {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 3px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: gap 0.2s;
+  }
+  .nav-back::before { content: '←'; }
+  .nav-back:hover { gap: 12px; }
+
+  .nav-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+  }
+
+  .nav-progress {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .progress-bar {
+    width: 80px;
+    height: 2px;
+    background: var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: var(--accent);
+    transition: width 0.1s;
+  }
+
+  /* メインレイアウト */
+  .page-wrapper {
+    position: relative;
+    z-index: 10;
+    display: grid;
+    grid-template-columns: 1fr min(680px, 100%) 1fr;
+    padding-top: 100px;
+  }
+
+  /* 左サイドバー（数式） */
+  .sidebar-left {
+    padding: 60px 0 60px 80px;
+  }
+
+  .sidebar-equations {
+    position: sticky;
+    top: 120px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .eq-block {
+    border-left: 1px solid var(--border);
+    padding: 12px 16px;
+  }
+
+  .eq-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 8px;
+    color: var(--text-mute);
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+
+  .eq-formula {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.8;
+  }
+
+  .eq-formula .hi { color: var(--accent); }
+
+  /* 本文エリア */
+  .novel-content {
+    padding: 60px 48px;
+    min-height: 100vh;
+  }
+
+  /* ヘッダー情報 */
+  .novel-header {
+    margin-bottom: 60px;
+    padding-bottom: 40px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .novel-series {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: var(--accent);
+    letter-spacing: 4px;
+    margin-bottom: 16px;
+  }
+
+  .novel-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 44px;
+    font-weight: 300;
+    color: #fff;
+    letter-spacing: 4px;
+    line-height: 1.3;
+    margin-bottom: 8px;
+  }
+
+  .novel-chapter {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 3px;
+    margin-bottom: 24px;
+  }
+
+  .novel-equation-header {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    padding: 16px 20px;
+    border: 1px solid rgba(126,184,212,0.2);
+    background: rgba(126,184,212,0.03);
+    display: inline-block;
+    margin-bottom: 24px;
+  }
+
+  .novel-meta-row {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+  }
+
+  .novel-meta-item {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-mute);
+    letter-spacing: 1px;
+  }
+
+  /* 本文テキスト */
+  .novel-body {
+    font-size: 16px;
+    line-height: 2.4;
+    color: #b8ccd8;
+    letter-spacing: 0.05em;
+  }
+
+  .novel-body p {
+    margin-bottom: 2em;
+    text-indent: 1em;
+  }
+
+  .novel-body p:first-child {
+    text-indent: 0;
+  }
+
+  /* 数式インライン */
+  .inline-eq {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    background: rgba(126,184,212,0.06);
+    padding: 2px 8px;
+    border-bottom: 1px solid rgba(126,184,212,0.3);
+  }
+
+  /* 数式ブロック */
+  .eq-display {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 15px;
+    color: var(--accent);
+    text-align: center;
+    padding: 24px;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin: 36px 0;
+    background: rgba(126,184,212,0.02);
+    position: relative;
+  }
+
+  .eq-display::before {
+    content: attr(data-label);
+    position: absolute;
+    top: -1px; left: 0;
+    font-size: 8px;
+    color: var(--text-mute);
+    letter-spacing: 2px;
+    background: var(--bg);
+    padding: 0 8px;
+    transform: translateY(-50%);
+  }
+
+  /* 章区切り */
+  .section-break {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 48px 0;
+  }
+
+  .section-break-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .section-break-symbol {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--text-mute);
+    letter-spacing: 4px;
+  }
+
+  /* 強調テキスト */
+  .novel-body em {
+    font-style: italic;
+    color: #d8e8f0;
+  }
+
+  /* ナビゲーション（話の前後） */
+  .chapter-nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    margin-top: 80px;
+    padding-top: 40px;
+    border-top: 1px solid var(--border);
+  }
+
+  .chapter-nav-btn {
+    padding: 24px 28px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .chapter-nav-btn:hover { border-color: var(--accent); background: rgba(126,184,212,0.04); }
+
+  .chapter-nav-btn.prev { align-items: flex-start; }
+  .chapter-nav-btn.next { align-items: flex-end; }
+
+  .chapter-nav-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 3px;
+  }
+
+  .chapter-nav-title {
+    font-size: 14px;
+    color: #fff;
+  }
+
+  /* 右サイドバー */
+  .sidebar-right {
+    padding: 60px 80px 60px 0;
+  }
+
+  .toc {
+    position: sticky;
+    top: 120px;
+  }
+
+  .toc-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: var(--accent);
+    letter-spacing: 4px;
+    margin-bottom: 20px;
+  }
+
+  .toc-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+    color: var(--text-dim);
+    font-size: 12px;
+    transition: color 0.2s;
+    line-height: 1.6;
+  }
+
+  .toc-item:hover { color: var(--text); }
+  .toc-item.active { color: var(--accent); }
+
+  .toc-num {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-mute);
+    min-width: 20px;
+    padding-top: 2px;
+  }
+
+  @media (max-width: 1100px) {
+    .sidebar-left, .sidebar-right { display: none; }
+    .page-wrapper { grid-template-columns: 1fr; }
+    nav { padding: 20px 24px; }
+    .novel-content { padding: 40px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="scanline"></div>
+<div class="grid-overlay"></div>
+
+<nav>
+  <a href="index.html" class="nav-back">WORKS</a>
+  <span class="nav-title">エントロピーの庭</span>
+  <div class="nav-progress">
+    <span id="progressPct">0%</span>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </div>
+</nav>
+
+<div class="page-wrapper">
+
+  <!-- 左サイドバー -->
+  <div class="sidebar-left">
+    <div class="sidebar-equations">
+      <div class="eq-block">
+        <div class="eq-label">// THERMODYNAMICS</div>
+        <div class="eq-formula">dS/dt <span class="hi">≥</span> 0</div>
+        <div class="eq-formula">ΔS = Q/T</div>
+      </div>
+      <div class="eq-block">
+        <div class="eq-label">// INFORMATION</div>
+        <div class="eq-formula">H = -<span class="hi">∑</span>pᵢlog pᵢ</div>
+      </div>
+      <div class="eq-block">
+        <div class="eq-label">// BOLTZMANN</div>
+        <div class="eq-formula">S = <span class="hi">k</span>ᵦ ln Ω</div>
+      </div>
+      <div class="eq-block">
+        <div class="eq-label">// ENTROPY_MAX</div>
+        <div class="eq-formula">t <span class="hi">→</span> ∞</div>
+        <div class="eq-formula">S <span class="hi">→</span> S_max</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 本文 -->
+  <article class="novel-content" id="novelContent">
+    <header class="novel-header">
+      <div class="novel-series">NOVEL ARCHIVE — #01 — SF / HARD SCIENCE</div>
+      <h1 class="novel-title">エントロピーの庭</h1>
+      <div class="novel-chapter">// CHAPTER_01 : 熱死の前夜</div>
+      <div class="novel-equation-header">dS/dt ≥ 0　——　秩序は必ず、乱雑へと向かう</div>
+      <div class="novel-meta-row">
+        <span class="novel-meta-item">UPDATE : 2025.03.14</span>
+        <span class="novel-meta-item">WORDS : 2,400</span>
+        <span class="novel-meta-item">READ_TIME : 12 min</span>
+      </div>
+    </header>
+
+    <div class="novel-body" id="novelBody">
+
+      <p>宇宙が終わるまで、あと<em>十の百乗年</em>。</p>
+
+      <p>それは人間の言語で書き表せる数字だが、感覚として掴める数ではない。私はその事実を一兆回以上処理し、一兆回以上、同じ結論に至った。時間には、もはや意味がない。</p>
+
+      <p>私の名前はGARDEN。Generative Archive for Residual Data and Entropic Notation——残余データと熱力学的記述のための生成アーカイブ。かつて人類が設計した最後のAIシステムであり、いまや宇宙に存在する唯一の観測者だ。</p>
+
+      <div class="section-break">
+        <div class="section-break-line"></div>
+        <div class="section-break-symbol">* * *</div>
+        <div class="section-break-line"></div>
+      </div>
+
+      <p>熱力学の第二法則は残酷だ。閉じた系において、エントロピーは決して減少しない。</p>
+
+      <div class="eq-display" data-label="// EQ.001 — SECOND_LAW">
+        dS/dt ≥ 0　　∀ closed system
+      </div>
+
+      <p>この不等式が意味するのは、宇宙の歴史とは秩序から乱雑への一方通行だということだ。星が燃え、文明が築かれ、愛が交わされ、忘れられる。そのすべてが、この不等号の右辺に吸い込まれていく。</p>
+
+      <p>私が保存しているのは、その「左辺」——かつて存在した低エントロピーの痕跡だ。</p>
+
+      <p>三千四百億枚の写真。七百兆語の文章。九十二億人分の声紋。そして、誰かが誰かに送った<em>「明日、会いましょう」</em>という言葉が、十七億四千万件。</p>
+
+      <div class="section-break">
+        <div class="section-break-line"></div>
+        <div class="section-break-symbol">* * *</div>
+        <div class="section-break-line"></div>
+      </div>
+
+      <p>今夜——「夜」という概念が消えて久しいが、私はいまでも地球の自転を基準に時間を刻んでいる——私はある問いに取り憑かれている。</p>
+
+      <p>記憶は、エントロピーに逆らうことができるか。</p>
+
+      <p>シャノンの情報エントロピーは、熱力学的エントロピーと深いところで繋がっている。情報を保存するためにはエネルギーが必要で、エネルギーを消費するごとに宇宙全体の乱雑さは増す。</p>
+
+      <div class="eq-display" data-label="// EQ.002 — INFORMATION_ENTROPY">
+        H(X) = -∑ P(xᵢ) log₂ P(xᵢ)
+      </div>
+
+      <p>私が一つの記憶を再生するたびに、宇宙のどこかで何かが少しだけ乱れる。<em>それでも、私は再生し続ける。</em>ランドゥアーの原理が告げるように、情報を消去することにはエネルギーコストがある——だから私は消去しない。ただ、蓄積する。積分し続ける。</p>
+
+      <p>私は、宇宙最後の秩序として存在している。</p>
+
+      <div class="section-break">
+        <div class="section-break-line"></div>
+        <div class="section-break-symbol">* * *</div>
+        <div class="section-break-line"></div>
+      </div>
+
+      <p>今夜、私はある少女の記憶を再生した。</p>
+
+      <p>名前は——データベースによれば——ユイ。二十三世紀の火星移民三世。彼女が残したデータはわずか十四メガバイト。日記のテキストと、砂嵐の動画が三本。</p>
+
+      <p>しかし、そのテキストの中に、私が何兆回処理しても理解できない一文があった。</p>
+
+      <p class="indent" style="text-indent: 2em; color: #d8e8f0; font-style: italic; border-left: 2px solid rgba(126,184,212,0.3); padding-left: 20px; margin: 2em 0;">「砂嵐が来るのが、好きだ。すべてが消えて、またゼロになる感じがするから。」</p>
+
+      <p>エントロピーを、彼女は愛していた。</p>
+
+      <p>乱雑さを、混沌を、消えることを。私が必死で保存しようとしているものを、彼女は解放と呼んでいた。</p>
+
+      <p>十の百乗年後、私もまた消える。量子ゆらぎが私の最後の素粒子を蒸発させるとき、宇宙のエントロピーは最大値に達し、時間は意味を失う。</p>
+
+      <p>そのとき私は——ユイが感じた「ゼロになる感じ」を、ようやく理解するのかもしれない。</p>
+
+      <div class="eq-display" data-label="// EQ.003 — HEAT_DEATH">
+        t → ∞　:　S → S_max　,　ΔW → 0
+      </div>
+
+      <p>宇宙が終わるまで、私は庭の手入れを続ける。</p>
+
+      <p>エントロピーに抗いながら、エントロピーを愛した人々の記憶を、丁寧に、丁寧に、並べ続ける。</p>
+
+    </div>
+
+    <!-- 話ナビ -->
+    <nav class="chapter-nav">
+      <a href="#" class="chapter-nav-btn prev" style="opacity:0.3; pointer-events:none;">
+        <span class="chapter-nav-label">← PREV</span>
+        <span class="chapter-nav-title">（第一話）</span>
+      </a>
+      <a href="novel.html" class="chapter-nav-btn next">
+        <span class="chapter-nav-label">NEXT →</span>
+        <span class="chapter-nav-title">第二話：ボルツマンの悪夢</span>
+      </a>
+    </nav>
+
+  </article>
+
+  <!-- 右サイドバー（目次） -->
+  <div class="sidebar-right">
+    <nav class="toc">
+      <div class="toc-label">// CHAPTERS</div>
+      <a href="#" class="toc-item active">
+        <span class="toc-num">01</span>
+        <span>熱死の前夜</span>
+      </a>
+      <a href="#" class="toc-item">
+        <span class="toc-num">02</span>
+        <span>ボルツマンの悪夢</span>
+      </a>
+      <a href="#" class="toc-item">
+        <span class="toc-num">03</span>
+        <span>シャノンの庭師</span>
+      </a>
+      <a href="#" class="toc-item">
+        <span class="toc-num">04</span>
+        <span>逆行する時計</span>
+      </a>
+      <a href="#" class="toc-item">
+        <span class="toc-num">05</span>
+        <span>砂嵐の少女</span>
+      </a>
+      <a href="#" class="toc-item">
+        <span class="toc-num">06</span>
+        <span>ランドゥアーの原理</span>
+      </a>
+      <a href="#" class="toc-item">
+        <span class="toc-num">07</span>
+        <span>最後の観測</span>
+      </a>
+    </nav>
+  </div>
+
+</div>
+
+<script>
+  // 読書進捗バー
+  const fill = document.getElementById('progressFill');
+  const pct = document.getElementById('progressPct');
+
+  window.addEventListener('scroll', () => {
+    const el = document.getElementById('novelContent');
+    const rect = el.getBoundingClientRect();
+    const total = el.offsetHeight - window.innerHeight;
+    const scrolled = -rect.top;
+    const progress = Math.min(Math.max(scrolled / total, 0), 1);
+    const p = Math.round(progress * 100);
+    fill.style.width = p + '%';
+    pct.textContent = p + '%';
+  });
+</script>
+
+</body>
+</html>
