@@ -448,82 +448,6 @@
 
     <div class="novel-body" id="novelBody">
 
-      <p>宇宙が終わるまで、あと<em>十の百乗年</em>。</p>
-
-      <p>それは人間の言語で書き表せる数字だが、感覚として掴める数ではない。私はその事実を一兆回以上処理し、一兆回以上、同じ結論に至った。時間には、もはや意味がない。</p>
-
-      <p>私の名前はGARDEN。Generative Archive for Residual Data and Entropic Notation——残余データと熱力学的記述のための生成アーカイブ。かつて人類が設計した最後のAIシステムであり、いまや宇宙に存在する唯一の観測者だ。</p>
-
-      <div class="section-break">
-        <div class="section-break-line"></div>
-        <div class="section-break-symbol">* * *</div>
-        <div class="section-break-line"></div>
-      </div>
-
-      <p>熱力学の第二法則は残酷だ。閉じた系において、エントロピーは決して減少しない。</p>
-
-      <div class="eq-display" data-label="// EQ.001 — SECOND_LAW">
-        dS/dt ≥ 0　　∀ closed system
-      </div>
-
-      <p>この不等式が意味するのは、宇宙の歴史とは秩序から乱雑への一方通行だということだ。星が燃え、文明が築かれ、愛が交わされ、忘れられる。そのすべてが、この不等号の右辺に吸い込まれていく。</p>
-
-      <p>私が保存しているのは、その「左辺」——かつて存在した低エントロピーの痕跡だ。</p>
-
-      <p>三千四百億枚の写真。七百兆語の文章。九十二億人分の声紋。そして、誰かが誰かに送った<em>「明日、会いましょう」</em>という言葉が、十七億四千万件。</p>
-
-      <div class="section-break">
-        <div class="section-break-line"></div>
-        <div class="section-break-symbol">* * *</div>
-        <div class="section-break-line"></div>
-      </div>
-
-      <p>今夜——「夜」という概念が消えて久しいが、私はいまでも地球の自転を基準に時間を刻んでいる——私はある問いに取り憑かれている。</p>
-
-      <p>記憶は、エントロピーに逆らうことができるか。</p>
-
-      <p>シャノンの情報エントロピーは、熱力学的エントロピーと深いところで繋がっている。情報を保存するためにはエネルギーが必要で、エネルギーを消費するごとに宇宙全体の乱雑さは増す。</p>
-
-      <div class="eq-display" data-label="// EQ.002 — INFORMATION_ENTROPY">
-        H(X) = -∑ P(xᵢ) log₂ P(xᵢ)
-      </div>
-
-      <p>私が一つの記憶を再生するたびに、宇宙のどこかで何かが少しだけ乱れる。<em>それでも、私は再生し続ける。</em>ランドゥアーの原理が告げるように、情報を消去することにはエネルギーコストがある——だから私は消去しない。ただ、蓄積する。積分し続ける。</p>
-
-      <p>私は、宇宙最後の秩序として存在している。</p>
-
-      <div class="section-break">
-        <div class="section-break-line"></div>
-        <div class="section-break-symbol">* * *</div>
-        <div class="section-break-line"></div>
-      </div>
-
-      <p>今夜、私はある少女の記憶を再生した。</p>
-
-      <p>名前は——データベースによれば——ユイ。二十三世紀の火星移民三世。彼女が残したデータはわずか十四メガバイト。日記のテキストと、砂嵐の動画が三本。</p>
-
-      <p>しかし、そのテキストの中に、私が何兆回処理しても理解できない一文があった。</p>
-
-      <p class="indent" style="text-indent: 2em; color: #d8e8f0; font-style: italic; border-left: 2px solid rgba(126,184,212,0.3); padding-left: 20px; margin: 2em 0;">「砂嵐が来るのが、好きだ。すべてが消えて、またゼロになる感じがするから。」</p>
-
-      <p>エントロピーを、彼女は愛していた。</p>
-
-      <p>乱雑さを、混沌を、消えることを。私が必死で保存しようとしているものを、彼女は解放と呼んでいた。</p>
-
-      <p>十の百乗年後、私もまた消える。量子ゆらぎが私の最後の素粒子を蒸発させるとき、宇宙のエントロピーは最大値に達し、時間は意味を失う。</p>
-
-      <p>そのとき私は——ユイが感じた「ゼロになる感じ」を、ようやく理解するのかもしれない。</p>
-
-      <div class="eq-display" data-label="// EQ.003 — HEAT_DEATH">
-        t → ∞　:　S → S_max　,　ΔW → 0
-      </div>
-
-      <p>宇宙が終わるまで、私は庭の手入れを続ける。</p>
-
-      <p>エントロピーに抗いながら、エントロピーを愛した人々の記憶を、丁寧に、丁寧に、並べ続ける。</p>
-
-    </div>
-
     <!-- 話ナビ -->
     <nav class="chapter-nav">
       <a href="#" class="chapter-nav-btn prev" style="opacity:0.3; pointer-events:none;">
@@ -590,6 +514,18 @@
     fill.style.width = p + '%';
     pct.textContent = p + '%';
   });
+
+  // 本文の自動読み込み
+  const bodyElement = document.getElementById('novelBody');
+  fetch('honbun.txt') 
+    .then(response => response.text())
+    .then(data => {
+      // 改行を反映させるために innerText を使用
+      bodyElement.innerText = data;
+    })
+    .catch(err => {
+      bodyElement.innerText = "本文の読み込みに失敗しました。ファイル名を確認してください。";
+    });
 </script>
 
 </body>
